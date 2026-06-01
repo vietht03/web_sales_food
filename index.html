@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnackFlow | Quản lý bán hàng quán ăn vặt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">SF</div>
+          <div>
+            <h1>SnackFlow</h1>
+            <p>Quản lý bán hàng</p>
+          </div>
+        </div>
+
+        <nav class="nav-card">
+          <button class="nav-item active" data-tab="dashboard">Dashboard</button>
+          <button class="nav-item" data-tab="report">Report</button>
+          <button class="nav-item" data-tab="finance">Thu nhập</button>
+        </nav>
+
+        <section class="sidebar-note">
+          <h2>Tổng quan nhanh</h2>
+          <p>Theo dõi vốn, doanh thu, chi phí và lợi nhuận theo thời gian chỉ trong một màn hình.</p>
+        </section>
+      </aside>
+
+      <main class="main-content">
+        <!-- Dashboard Tab -->
+        <section id="tab-dashboard" class="tab-page">
+          <header class="topbar">
+            <div>
+              <span class="eyebrow">Dashboard</span>
+              <h2>Lên đơn & Nhập món</h2>
+              <p>Ghi nhận đơn hàng trong ngày và xem nhật ký đơn hàng.</p>
+            </div>
+          </header>
+
+          <section class="action-grid">
+            <article class="panel form-panel">
+              <div class="section-head">
+                <div>
+                  <span class="eyebrow">Ghi nhận đơn hàng</span>
+                  <h3>Thêm đơn bán mới</h3>
+                </div>
+                <span class="badge">Dùng menu có sẵn</span>
+              </div>
+
+              <form class="order-form" id="orderForm">
+                <label class="field">
+                  <span>Món ăn</span>
+                  <select id="orderItem" required></select>
+                </label>
+                <label class="field">
+                  <span>Số lượng</span>
+                  <input id="orderQuantity" type="number" min="1" value="1" required />
+                </label>
+                <label class="field">
+                  <span>Ngày bán</span>
+                  <input id="orderDate" type="date" required />
+                </label>
+                <div class="field">
+                  <span>Thành tiền</span>
+                  <div id="previewTotal" style="font-weight:800;">0 ₫</div>
+                </div>
+                <button class="primary-btn" type="submit">Ghi nhận đơn</button>
+              </form>
+              <p class="form-hint" id="formHint">Đơn mới sẽ xuất hiện trong nhật ký phía dưới.</p>
+            </article>
+
+            <article class="panel">
+              <div class="section-head">
+                <div>
+                  <span class="eyebrow">Nhật ký đơn hàng</span>
+                  <h3>Đơn đã nhập (chọn ngày để xem)</h3>
+                </div>
+                <span class="badge">Theo ngày</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Ngày</th>
+                      <th>Món</th>
+                      <th>Số lượng</th>
+                      <th>Doanh thu</th>
+                      <th>Lãi gộp</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dailyOrdersTable"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <!-- Report Tab -->
+        <section id="tab-report" class="tab-page" style="display:none;">
+          <header class="topbar">
+            <div>
+              <span class="eyebrow">Report</span>
+              <h2>Thống kê & Biểu đồ sản phẩm</h2>
+              <p>Xem doanh thu, lợi nhuệp và món bán chạy theo thời gian.</p>
+            </div>
+
+            <div class="filter-panel">
+              <span>Lọc thời gian</span>
+              <div class="filter-buttons report-filters" role="tablist" aria-label="Lọc thời gian báo cáo">
+                <button class="filter-btn active" data-range="today" type="button">Hôm nay</button>
+                <button class="filter-btn" data-range="week" type="button">Tuần này</button>
+                <button class="filter-btn" data-range="month" type="button">Tháng này</button>
+                <button class="filter-btn" data-range="year" type="button">Năm nay</button>
+              </div>
+            </div>
+          </header>
+
+          <section class="chart-wide">
+            <article class="panel chart-panel">
+              <div class="section-head">
+                <div>
+                  <span class="eyebrow">Xu hướng</span>
+                  <h3>Doanh thu & Lợi nhuận</h3>
+                </div>
+              </div>
+              <div class="chart-canvas">
+                <canvas id="trendChart"></canvas>
+              </div>
+            </article>
+          </section>
+
+          <section class="insight-grid">
+            <article class="panel">
+              <div class="section-head">
+                <div>
+                  <span class="eyebrow">Top món</span>
+                  <h3>Số lượng đã bán</h3>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Món ăn</th>
+                      <th>Số lượng</th>
+                      <th>Doanh thu</th>
+                      <th>Lãi gộp</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reportBestSellerTable"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel chart-panel">
+              <div class="section-head">
+                <div>
+                  <span class="eyebrow">Biểu đồ cột</span>
+                  <h3>Top món bán chạy</h3>
+                </div>
+              </div>
+              <div class="chart-canvas">
+                <canvas id="bestSellerChart"></canvas>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <!-- Finance Tab -->
+        <section id="tab-finance" class="tab-page" style="display:none;">
+          <header class="topbar">
+            <div>
+              <span class="eyebrow">Thu nhập</span>
+              <h2>Báo cáo Lời/Lỗ</h2>
+              <p>Thông tin tài chính tổng quan theo khoảng thời gian.</p>
+            </div>
+
+            <div class="filter-panel">
+              <span>Lọc thời gian</span>
+              <div class="filter-buttons finance-filters" role="tablist" aria-label="Lọc thời gian báo cáo">
+                <button class="filter-btn active" data-range="today" type="button">Hôm nay</button>
+                <button class="filter-btn" data-range="week" type="button">Tuần này</button>
+                <button class="filter-btn" data-range="month" type="button">Tháng này</button>
+                <button class="filter-btn" data-range="year" type="button">Năm nay</button>
+              </div>
+            </div>
+          </header>
+
+          <section class="stats-grid" aria-label="Chỉ số tổng quan">
+            <article class="stat-card accent-warm">
+              <span class="stat-label">Vốn ban đầu</span>
+              <strong id="initialCapital">0 đ</strong>
+              <small>Chi phí đầu tư ban đầu</small>
+            </article>
+            <article class="stat-card accent-blue">
+              <span class="stat-label">Doanh thu</span>
+              <strong id="financeRevenue">0 đ</strong>
+              <small>Tổng doanh thu theo khoảng lọc</small>
+            </article>
+            <article class="stat-card accent-orange">
+              <span class="stat-label">Chi phí</span>
+              <strong id="financeExpenses">0 đ</strong>
+              <small>Tổng giá vốn + khấu hao</small>
+            </article>
+            <article class="stat-card accent-green">
+              <span class="stat-label">Thu nhập ròng</span>
+              <strong id="financeProfit">0 đ</strong>
+              <small>Lợi nhuận = Doanh thu - Chi phí</small>
+            </article>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <span class="eyebrow">Kết luận</span>
+                <h3>Tình trạng Lời / Lỗ</h3>
+              </div>
+              <div id="financeConclusion" class="status-pill">Đang tính...</div>
+            </div>
+            <p id="financeNote" class="form-hint">Hệ thống sẽ tính theo bộ lọc thời gian ở trên.</p>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
