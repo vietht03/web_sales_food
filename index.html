@@ -54,22 +54,30 @@
               </div>
 
               <form class="order-form" id="orderForm">
+                <div class="field menu-field">
+                  <span>Menu POS</span>
+                  <div id="menuGrid" class="menu-grid" aria-label="Danh sách món bán"></div>
+                </div>
+                <div class="cart-box">
+                  <div class="cart-head">
+                    <span>Món đã chọn</span>
+                    <strong id="previewTotal">0 ₫</strong>
+                  </div>
+                  <p id="cartEmpty" class="cart-empty">Chạm vào món trong menu để thêm vào giỏ.</p>
+                  <div id="cartItems" class="cart-items"></div>
+                </div>
                 <label class="field">
-                  <span>Món ăn</span>
-                  <select id="orderItem" required></select>
+                  <span>Kênh bán</span>
+                  <select id="salesChannel" required></select>
                 </label>
                 <label class="field">
-                  <span>Số lượng</span>
-                  <input id="orderQuantity" type="number" min="1" value="1" required />
+                  <span>Thanh toán</span>
+                  <select id="paymentMethod" required></select>
                 </label>
                 <label class="field">
                   <span>Ngày bán</span>
                   <input id="orderDate" type="date" required />
                 </label>
-                <div class="field">
-                  <span>Thành tiền</span>
-                  <div id="previewTotal" style="font-weight:800;">0 ₫</div>
-                </div>
                 <button class="primary-btn" type="submit">Ghi nhận đơn</button>
               </form>
               <p class="form-hint" id="formHint">Đơn mới sẽ xuất hiện trong nhật ký phía dưới.</p>
@@ -91,6 +99,8 @@
                       <th>Ngày</th>
                       <th>Món</th>
                       <th>Số lượng</th>
+                      <th>Kênh bán</th>
+                      <th>Thanh toán</th>
                       <th>Doanh thu</th>
                       <th>Lãi gộp</th>
                     </tr>
@@ -147,6 +157,18 @@
                   <canvas id="bestSellerChart"></canvas>
                 </div>
               </article>
+
+              <article class="panel chart-panel chart-wide">
+                <div class="section-head compact-head">
+                  <div>
+                    <span class="eyebrow">Timeline</span>
+                    <h3>Khung giờ cao điểm</h3>
+                  </div>
+                </div>
+                <div class="chart-canvas chart-canvas-short">
+                  <canvas id="peakHourChart"></canvas>
+                </div>
+              </article>
             </div>
 
             <article class="panel report-table-panel">
@@ -168,6 +190,30 @@
                   </thead>
                   <tbody id="reportBestSellerTable"></tbody>
                 </table>
+              </div>
+            </article>
+
+            <article class="panel chart-panel">
+              <div class="section-head compact-head">
+                <div>
+                  <span class="eyebrow">Kênh bán</span>
+                  <h3>Tỷ trọng doanh thu theo kênh</h3>
+                </div>
+              </div>
+              <div class="chart-canvas chart-canvas-short">
+                <canvas id="channelChart"></canvas>
+              </div>
+            </article>
+
+            <article class="panel chart-panel">
+              <div class="section-head compact-head">
+                <div>
+                  <span class="eyebrow">Thanh toán</span>
+                  <h3>Tỷ trọng phương thức thanh toán</h3>
+                </div>
+              </div>
+              <div class="chart-canvas chart-canvas-short">
+                <canvas id="paymentChart"></canvas>
               </div>
             </article>
           </section>
@@ -229,6 +275,8 @@
         </section>
       </main>
     </div>
+
+    <div id="receiptTemplate" class="receipt-template" aria-hidden="true"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
