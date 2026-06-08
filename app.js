@@ -5,7 +5,11 @@
    - Chart.js integration
 */
 
-const baseCapital = 15000000;
+const DEFAULT_BASE_CAPITAL = 15000000;
+const STORAGE_KEYS = {
+  orders: 'snackflow.orders',
+  initialCapital: 'snackflow.initialCapital',
+};
 
 const menuItems = [
   { name: "Cá viên chiên", price: 22000, cost: 13000 },
@@ -30,8 +34,74 @@ function enrichOrder(order, id) {
   return { ...order, id, revenue, expenses, profit, dateValue: new Date(`${order.date}T00:00:00`) };
 }
 
-// start empty
-const orders = [];
+function readStorage(key, fallback = null) {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch (error) {
+    console.warn(`Unable to read ${key} from localStorage`, error);
+    return fallback;
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn(`Unable to write ${key} to localStorage`, error);
+  }
+}
+
+function parseCapital(value) {
+  const parsed = Number(String(value ?? '').replace(/[^\d]/g, ''));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_BASE_CAPITAL;
+}
+
+function loadInitialCapital() {
+  return parseCapital(readStorage(STORAGE_KEYS.initialCapital, DEFAULT_BASE_CAPITAL));
+}
+
+function serializeOrder(order) {
+  const { dateValue, revenue, expenses, profit, ...rest } = order;
+  return rest;
+}
+
+function loadOrders() {
+  const raw = readStorage(STORAGE_KEYS.orders, '[]');
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((order, index) => {
+        const menu = menuMap.get(order.item) || {};
+        const date = order.date;
+        const quantity = Number(order.quantity);
+        const price = Number(order.price ?? menu.price);
+        const cost = Number(order.cost ?? menu.cost);
+
+        if (!date || !order.item || !quantity || quantity <= 0 || !Number.isFinite(price) || !Number.isFinite(cost)) {
+          return null;
+        }
+
+        return enrichOrder({ date, item: order.item, quantity, price, cost }, order.id ?? index + 1);
+      })
+      .filter(Boolean);
+  } catch (error) {
+    console.warn('Unable to parse saved orders from localStorage', error);
+    return [];
+  }
+}
+
+function saveOrders() {
+  writeStorage(STORAGE_KEYS.orders, JSON.stringify(orders.map(serializeOrder)));
+}
+
+function saveInitialCapital() {
+  writeStorage(STORAGE_KEYS.initialCapital, String(baseCapital));
+}
+
+const orders = loadOrders();
+let baseCapital = loadInitialCapital();
 
 const state = { range: 'today', activeTab: 'dashboard' };
 
@@ -94,8 +164,8 @@ const elements = {
 
 let bestSellerChart=null; let trendChart=null;
 
-function initCharts(){ if(elements.bestSellerChartEl){ const ctx=elements.bestSellerChartEl.getContext('2d'); bestSellerChart=new Chart(ctx,{ type:'bar', data:{ labels:[], datasets:[{ label:'Số lượng', data:[], backgroundColor:'rgba(255,154,60,0.85)', borderRadius:8 }] }, options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } } }); }
-  if(elements.trendChartEl){ const ctx2=elements.trendChartEl.getContext('2d'); trendChart=new Chart(ctx2,{ type:'line', data:{ labels:[], datasets:[ { label:'Doanh thu', data:[], borderColor:'#ff8f3d', backgroundColor:'rgba(255,143,61,0.18)', fill:true, tension:0.3 }, { label:'Lợi nhuận', data:[], borderColor:'#16a34a', backgroundColor:'rgba(16,163,74,0.12)', fill:true, tension:0.3 } ] }, options:{ responsive:true, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true } } } }); }
+function initCharts(){ if(elements.bestSellerChartEl){ const ctx=elements.bestSellerChartEl.getContext('2d'); bestSellerChart=new Chart(ctx,{ type:'bar', data:{ labels:[], datasets:[{ label:'Số lượng', data:[], backgroundColor:'rgba(255,154,60,0.85)', borderRadius:8 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } } }); }
+  if(elements.trendChartEl){ const ctx2=elements.trendChartEl.getContext('2d'); trendChart=new Chart(ctx2,{ type:'line', data:{ labels:[], datasets:[ { label:'Doanh thu', data:[], borderColor:'#ff8f3d', backgroundColor:'rgba(255,143,61,0.18)', fill:true, tension:0.3 }, { label:'Lợi nhuận', data:[], borderColor:'#16a34a', backgroundColor:'rgba(16,163,74,0.12)', fill:true, tension:0.3 } ] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true } } } }); }
 }
 
 function updateCharts(list, range){ if(!bestSellerChart || !trendChart) return; const sellers=buildBestSellers(list); bestSellerChart.data.labels=sellers.map(s=>s.item); bestSellerChart.data.datasets[0].data=sellers.map(s=>s.quantity); bestSellerChart.update(); const trend=buildTrendData(list, range); trendChart.data.labels=trend.labels; trendChart.data.datasets[0].data=trend.revenue; trendChart.data.datasets[1].data=trend.profit; trendChart.update(); }
@@ -112,7 +182,7 @@ function renderReport(){ const filtered = getFilteredOrders(state.range); // tab
   const sellers = buildBestSellers(filtered); elements.reportBestSellerTable.innerHTML = sellers.map(s=>`<tr><td>${s.item}</td><td>${s.quantity}</td><td>${formatMoney(s.revenue)}</td><td class="${s.profit>=0?'money-good':'money-bad'}">${formatMoney(s.profit)}</td></tr>`).join('') || `<tr><td colspan="4" style="text-align:center;color:var(--muted)">Không có dữ liệu.</td></tr>`; updateCharts(filtered, state.range);
 }
 
-function renderFinance(){ const filtered = getFilteredOrders(state.range); const agg = aggregateOrders(filtered); const expensesWithDep = agg.expenses + Math.round(baseCapital * 0.03); const profit = agg.revenue - expensesWithDep; if(elements.initialCapital) elements.initialCapital.textContent = formatMoney(baseCapital); if(elements.financeRevenue) elements.financeRevenue.textContent = formatMoney(agg.revenue); if(elements.financeExpenses) elements.financeExpenses.textContent = formatMoney(expensesWithDep); if(elements.financeProfit) elements.financeProfit.textContent = formatMoney(profit); if(elements.financeConclusion){ const positive = profit>=0; elements.financeConclusion.textContent = positive? `Hệ thống đang LỜI ${formatMoney(profit)}`: `Hệ thống đang LỖ ${formatMoney(Math.abs(profit))}`; elements.financeConclusion.classList.toggle('profit', positive); elements.financeConclusion.classList.toggle('loss', !positive); } }
+function renderFinance(){ const filtered = getFilteredOrders(state.range); const agg = aggregateOrders(filtered); const depreciation = Math.round(baseCapital * 0.03); const expensesWithDep = agg.expenses + depreciation; const profit = agg.revenue - expensesWithDep; if(elements.initialCapital && document.activeElement !== elements.initialCapital) elements.initialCapital.value = baseCapital; if(elements.financeRevenue) elements.financeRevenue.textContent = formatMoney(agg.revenue); if(elements.financeExpenses) elements.financeExpenses.textContent = formatMoney(expensesWithDep); if(elements.financeProfit) elements.financeProfit.textContent = formatMoney(profit); if(elements.financeConclusion){ const positive = profit>=0; elements.financeConclusion.textContent = positive? `Hệ thống đang LỜI ${formatMoney(profit)}`: `Hệ thống đang LỖ ${formatMoney(Math.abs(profit))}`; elements.financeConclusion.classList.toggle('profit', positive); elements.financeConclusion.classList.toggle('loss', !positive); } }
 
 // switch tab
 function switchTo(tab){ state.activeTab = tab; document.querySelectorAll('.tab-page').forEach(p=>p.style.display='none'); const el = document.getElementById('tab-'+tab); if(el) el.style.display='block'; // refresh
@@ -127,7 +197,8 @@ function initHandlers(){ // nav
   // form
   if(elements.orderItem) elements.orderItem.addEventListener('change', updatePreviewTotal);
   if(elements.orderQuantity) elements.orderQuantity.addEventListener('input', updatePreviewTotal);
-  if(elements.orderForm) elements.orderForm.addEventListener('submit', (e)=>{ e.preventDefault(); const name = elements.orderItem.value; const qty = Number(elements.orderQuantity.value); const date = elements.orderDate.value; const menu = menuMap.get(name); if(!menu || !date || !qty || qty<=0){ setFormHint('Vui lòng nhập thông tin hợp lệ.', true); return; } const newO = enrichOrder({ date, item:name, quantity:qty, price:menu.price, cost:menu.cost }, orders.length+1); orders.push(newO); setFormHint('Đã ghi nhận đơn hàng mới.'); // update views
+  if(elements.initialCapital) elements.initialCapital.addEventListener('input', ()=>{ baseCapital = parseCapital(elements.initialCapital.value); saveInitialCapital(); renderFinance(); });
+  if(elements.orderForm) elements.orderForm.addEventListener('submit', (e)=>{ e.preventDefault(); const name = elements.orderItem.value; const qty = Number(elements.orderQuantity.value); const date = elements.orderDate.value; const menu = menuMap.get(name); if(!menu || !date || !qty || qty<=0){ setFormHint('Vui lòng nhập thông tin hợp lệ.', true); return; } const newO = enrichOrder({ date, item:name, quantity:qty, price:menu.price, cost:menu.cost }, orders.length+1); orders.push(newO); saveOrders(); setFormHint('Đã ghi nhận đơn hàng mới.'); // update views
     renderDashboard(); if(state.activeTab==='report') renderReport(); if(state.activeTab==='finance') renderFinance(); elements.orderQuantity.value='1'; updatePreviewTotal(); });
 }
 

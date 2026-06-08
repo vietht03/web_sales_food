@@ -108,7 +108,7 @@
             <div>
               <span class="eyebrow">Report</span>
               <h2>Thống kê & Biểu đồ sản phẩm</h2>
-              <p>Xem doanh thu, lợi nhuệp và món bán chạy theo thời gian.</p>
+              <p>Xem doanh thu, lợi nhuận và món bán chạy theo thời gian.</p>
             </div>
 
             <div class="filter-panel">
@@ -122,22 +122,34 @@
             </div>
           </header>
 
-          <section class="chart-wide">
-            <article class="panel chart-panel">
-              <div class="section-head">
-                <div>
-                  <span class="eyebrow">Xu hướng</span>
-                  <h3>Doanh thu & Lợi nhuận</h3>
+          <section class="report-grid">
+            <div class="report-charts">
+              <article class="panel chart-panel">
+                <div class="section-head compact-head">
+                  <div>
+                    <span class="eyebrow">Xu hướng</span>
+                    <h3>Doanh thu & Lợi nhuận</h3>
+                  </div>
                 </div>
-              </div>
-              <div class="chart-canvas">
-                <canvas id="trendChart"></canvas>
-              </div>
-            </article>
-          </section>
+                <div class="chart-canvas">
+                  <canvas id="trendChart"></canvas>
+                </div>
+              </article>
 
-          <section class="insight-grid">
-            <article class="panel">
+              <article class="panel chart-panel">
+                <div class="section-head compact-head">
+                  <div>
+                    <span class="eyebrow">Biểu đồ cột</span>
+                    <h3>Top món bán chạy</h3>
+                  </div>
+                </div>
+                <div class="chart-canvas chart-canvas-short">
+                  <canvas id="bestSellerChart"></canvas>
+                </div>
+              </article>
+            </div>
+
+            <article class="panel report-table-panel">
               <div class="section-head">
                 <div>
                   <span class="eyebrow">Top món</span>
@@ -156,18 +168,6 @@
                   </thead>
                   <tbody id="reportBestSellerTable"></tbody>
                 </table>
-              </div>
-            </article>
-
-            <article class="panel chart-panel">
-              <div class="section-head">
-                <div>
-                  <span class="eyebrow">Biểu đồ cột</span>
-                  <h3>Top món bán chạy</h3>
-                </div>
-              </div>
-              <div class="chart-canvas">
-                <canvas id="bestSellerChart"></canvas>
               </div>
             </article>
           </section>
@@ -195,8 +195,8 @@
 
           <section class="stats-grid" aria-label="Chỉ số tổng quan">
             <article class="stat-card accent-warm">
-              <span class="stat-label">Vốn ban đầu</span>
-              <strong id="initialCapital">0 đ</strong>
+              <label class="stat-label" for="initialCapital">Vốn ban đầu</label>
+              <input id="initialCapital" class="capital-input" type="number" min="0" step="1000" inputmode="numeric" />
               <small>Chi phí đầu tư ban đầu</small>
             </article>
             <article class="stat-card accent-blue">
